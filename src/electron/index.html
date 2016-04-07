@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Browser</title>
+    <script>window.$ = window.jQuery = require('./jquery.min.js');</script>
+
+  </head>
+  <body style="background-color:black; color: gray;">
+  <script>
+
+  var ipc = require("electron").ipcRenderer
+
+  // Capture keypresses - mostly works, but text still types into input boxes
+  $(window).keydown(function(event) {
+      if(event.ctrlKey) { 
+        console.log("Hey! Ctrl+" + event.keyCode + " event captured!");
+        event.preventDefault(); 
+      }
+      else { 
+        console.log("Hey! " + event.keyCode + " event captured!");
+        event.preventDefault(); 
+      }
+      ipc.send('keyDown', event.keyCode);
+  });
+
+  $(document).ready(function() {
+
+    var webview = document.getElementById("webview");
+
+    var kwargs = require('kwargs')
+
+    ipc.on('console', function(event, message) {
+      console.log(message);
+    });
+
+    ipc.on('webview', function(event, message) {
+      var jmsg = JSON.parse(message);
+
+      var fn_name = jmsg.fn;
+      var arg = jmsg.arg;
+
+      switch(fn_name) {
+        case 'loadURL':
+          webview.src = arg;
+          break;
+        default:
+          console.log(fn_name);
+      };
+    });
+
+  });
+
+  </script>
+    Loading...
+    <script>document.write(process.versions.node)</script>
+    <webview id="webview" style="position: absolute; width: 100%; height: 100%; left:0; top:0;" src="https://www.google.com"  autosize="on" plugins disablewebsecurity partition="persist:netflix"></webview>
+  </body>
+</html>

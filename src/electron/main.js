@@ -9,8 +9,9 @@ const BrowserWindow = electron.BrowserWindow;
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let win;
+let websocket;
 
-let ws;
+const ipcMain = require('electron').ipcMain;
 
 function startWebsocketServer() {
   // Websocket Server
@@ -19,6 +20,11 @@ function startWebsocketServer() {
   , wss = new WebSocketServer({ port: 39682 });
 
   wss.on('connection', function connection(ws) {
+
+    websocket = ws;
+
+    ws.send('startup');
+
     ws.on('message', function incoming(message, flags) {
       console.log('received: %s', message);
       var jmsg = JSON.parse(message);
@@ -26,9 +32,13 @@ function startWebsocketServer() {
       ws.send(JSON.stringify(ret));
     });
 
-    ws.send('something');
   });
 };
+
+ipcMain.on('keyDown', function(event, arg) {
+  sendMessage('keyDown', arg);
+});
+
 
 function createWindow () {
   // Create the browser window.
@@ -49,15 +59,6 @@ function createWindow () {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     win = null;
-  });
-
-  const ipcMain = require('electron').ipcMain;
-  
-  ipcMain.on('keyDown', function(event, arg) {
-    console.log(arg);
-    if (ws) {
-      ws.send('{keyDown:'+arg+'}');
-    }
   });
 
 }
@@ -84,14 +85,18 @@ app.on('activate', function () {
 });
 
 function handleMessage(message) {
-
   var fn_name = message.fn;
   var arg = message.arg;
 
   switch(fn_name) {
 
     case 'loadURL':
-      var msg = {'fn': 'loadURL', 'arg': arg}
+      var msg = {fn: 'loadURL', arg: arg}
+      win.webContents.send('webview', JSON.stringify(msg));
+      break;
+
+    case 'keyDown':
+      var msg = {fn: 'keyDown', arg: arg}
       win.webContents.send('webview', JSON.stringify(msg));
       break;
 
@@ -115,5 +120,14 @@ function handleMessage(message) {
     default:
       win.webContents.send('console', 'unknown message: ' + fn_name);
   };
-
 };
+
+function sendMessage(fn, arg) {
+  var msg = {fn: 'keyDown', arg: arg};
+  if (websocket) {
+    websocket.send(JSON.stringify(msg));
+  } else {
+    console.log(msg);
+  };
+};
+

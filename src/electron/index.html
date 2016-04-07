@@ -2,7 +2,7 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>Browser</title>
+    <title>rcBrowser</title>
     <script>window.$ = window.jQuery = require('./jquery.min.js');</script>
 
   </head>
@@ -41,9 +41,18 @@
       var arg = jmsg.arg;
 
       switch(fn_name) {
+        
         case 'loadURL':
           webview.src = arg;
           break;
+        
+        case 'keyDown':
+          webview.sendInputEvent({
+            type: "keyDown",
+            keyCode: arg
+          });
+          break;
+
         default:
           console.log(fn_name);
       };
@@ -54,6 +63,6 @@
   </script>
     Loading...
     <script>document.write(process.versions.node)</script>
-    <webview id="webview" style="position: absolute; width: 100%; height: 100%; left:0; top:0;" src="https://www.google.com"  autosize="on" plugins disablewebsecurity partition="persist:netflix"></webview>
+    <webview id="webview" style="position: absolute; width: 100%; height: 100%; left:0; top:0;" src="black.html"  autosize="on" plugins disablewebsecurity partition="persist:netflix"></webview>
   </body>
 </html>

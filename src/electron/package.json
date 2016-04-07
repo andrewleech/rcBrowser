@@ -1,7 +1,7 @@
 {
-  "name": "electron-quick-start",
+  "name": "rcBrowser",
   "version": "1.0.0",
-  "description": "A minimal Electron application",
+  "description": "Web Browser with websocket remote control",
   "main": "main.js",
   "scripts": {
     "start": "electron main.js"
@@ -10,22 +10,18 @@
     "type": "git",
     "url": "git+https://github.com/atom/electron-quick-start.git"
   },
-  "keywords": [
-    "Electron",
-    "quick",
-    "start",
-    "tutorial"
-  ],
-  "author": "GitHub",
+  "author": "Andrew Leech",
   "license": "CC0-1.0",
   "bugs": {
-    "url": "https://github.com/atom/electron-quick-start/issues"
+    "url": "https://github.com/andrewleech/rcBrowser/issues"
   },
-  "homepage": "https://github.com/atom/electron-quick-start#readme",
+  "homepage": "https://github.com/andrewleech/rcBrowser",
   "devDependencies": {
+    "electron-packager": "^6.0.0",
     "electron-prebuilt": "^0.36.0"
   },
   "dependencies": {
+    "electron-prebuilt": "^0.37.5",
     "kwargs": "0.0.2",
     "ws": "^1.0.1"
   }

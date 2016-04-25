@@ -39,6 +39,7 @@
 
       var fn_name = jmsg.fn;
       var arg = jmsg.arg;
+      var ret = null;
 
       switch(fn_name) {
         
@@ -46,23 +47,62 @@
           webview.src = arg;
           break;
         
-        case 'keyDown':
-          webview.sendInputEvent({
-            type: "keyDown",
-            keyCode: arg
-          });
+        case 'backToBlack':
+          webview.src = "black.html";
           break;
 
+        case 'back':
+          webview.goBack();
+          break;
+        
+        case 'keyPress':
+            if (arg[0] == '\\' && arg[1] == 'u') {
+              arg = JSON.parse(arg)
+            }
+            webview.sendInputEvent({
+              type: "keyDown",
+              keyCode: arg
+            });
+            webview.sendInputEvent({
+              type: "keyUp",
+              keyCode: arg
+            });
+          break;
+
+        case 'devTools':
+          webview.openDevTools();
+          break;
+        
+        case 'executeJavaScript':
+          ret = webview.executeJavaScript(arg);
+          break;
+        
         default:
           console.log(fn_name);
       };
+      event.returnValue = ret;
     });
 
   });
 
+const remote = require('electron').remote;
+const Menu = remote.Menu;
+const MenuItem = remote.MenuItem;
+
+var menu = new Menu();
+menu.append(new MenuItem({ label: 'Dev Tools', click: function() { webview.openDevTools(); } }));
+// menu.append(new MenuItem({ type: 'separator' }));
+// menu.append(new MenuItem({ label: 'MenuItem2', type: 'checkbox', checked: true }));
+
+window.addEventListener('contextmenu', function (e) {
+  e.preventDefault();
+  menu.popup(remote.getCurrentWindow());
+}, false);
+
+
   </script>
     Loading...
     <script>document.write(process.versions.node)</script>
-    <webview id="webview" style="position: absolute; width: 100%; height: 100%; left:0; top:0;" src="black.html"  autosize="on" plugins disablewebsecurity partition="persist:netflix"></webview>
+    <webview id="webview" style="position: absolute; width: 100%; height: 100%; left:0; top:0;" src="black.html" autosize="on" plugins disablewebsecurity partition="persist:rcBrowser"></webview>
   </body>
 </html>

@@ -182,7 +182,7 @@ function handleMessage(message) {
       break;
 
     case 'executeJavaScript':
-      ret.arg = webviewJavascript(arg);
+      ret.arg = eval(arg);
       break;
 
     case 'setFullScreen':
@@ -208,7 +208,7 @@ function handleMessage(message) {
 };
 
 function sendMessage(fn, arg) {
-  var msg = JSON.stringify({fn: 'keyDown', arg: arg});
+  var msg = JSON.stringify({fn: fn, arg: arg});
   if (websocket) {
     websocket.send(msg);
     console.log("<-" + msg);

@@ -4,7 +4,7 @@
   "description": "Web Browser with websocket remote control",
   "main": "main.js",
   "scripts": {
-    "start": "electron main.js"
+    "start": "electron main.js",
     "package": "electron-packager ./ --all --overwrite --tmpdir=false" 
 
   },

@@ -1,5 +1,26 @@
 language: node_js
 node_js:
-  - "node"
+- node
+script: cd src/electron; npm install && npm run-script package
+after_success:
+  - tar czf rcBrowser-linux-ia32.tgz rcBrowser-linux-ia32
+  - tar czf rcBrowser-win32-ia32.tgz rcBrowser-win32-ia32
+  - tar czf rcBrowser-darwin-x64.tgz rcBrowser-darwin-x64
+  - tar czf rcBrowser-linux-x64.tgz  rcBrowser-linux-x64
+  - tar czf rcBrowser-mas-x64.tgz    rcBrowser-mas-x64
+  - tar czf rcBrowser-win32-x64.tgz  rcBrowser-win32-x64
+deploy:
+  provider: releases
+  api_key:
+    secure: siCpLDW0ecZbEay0jDkZAHcGoVWA7LGkWrVI5q5su7FYDZaE6OBqmApvhS7aplal6bRsxSquPGZOvXCKtIdRXUo7iIH5XxlUedAQTfyNScJ3kxor0KYD0OnQiJujVS8mXVpXnt7dx+Ln0DkHHSCHckR1vU2shhNVVsxJk7Dq0hcZEPxqtt9+f9hsPH8lmiRV12uXZhLECbtMfVmMXoK3xI8kt2TlSLRCeoKb4vKZis+1Hb3kV0lda8m9lQ3Qa2P4F5nARpOyTEAs1eU/XHRb0K6G7zAdIF0UxxR5f8fZlvAHBfgXMZ6bbkVPBF55XGz3Lmoc7rhcayM5luCszfAACPckToELJwTi9IW09iToYf8fHmWPWCBixBo/b2QnrThtRswXAolgOb3zF8FQq1Bz0rNI0oZTWlCl3vx2tA0pGz/mssWqhok1l28HIbxKsAICZicTkFrrwnQ5CyyXPN7BBnEBWlthFyFEg0fHEjfAnA2G6Xv1NqdI/Gfxn19Q6JhMXJzPdfK73v/iq2EAZNFY4+nTZv+g1MeCjbnUhdWeDUmkO/0yZiazdl8nclsI8+B0Tzv0iLJZcFvuspnoPqq3j48Il+1QHkQ2PKUMYm1W5qp3/wDl2LaThmtjWqI3HMOfKgYcvunvs98U1X0FfKgvaw4hBNS1OBn7p4aqYD84C2s=
+  file: 
+    - src/electron/rcBrowser-linux-ia32.tgz
+    - src/electron/rcBrowser-win32-ia32.tgz
+    - src/electron/rcBrowser-darwin-x64.tgz
+    - src/electron/rcBrowser-linux-x64.tgz
+    - src/electron/rcBrowser-mas-x64.tgz
+    - src/electron/rcBrowser-win32-x64.tgz
 
-script: "cd src/electron; npm install && npm run-script package"
+  on:
+    repo: andrewleech/rcBrowser
+    tags: true

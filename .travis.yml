@@ -1,9 +1,8 @@
 language: node_js
 node_js:
 - node
-pre-script: cd src/electron
 
-script: npm install && npm run-script package
+script: cd src/electron; npm install && npm run-script package
 
 after_success:
   - tar czf rcBrowser-linux-ia32.tgz rcBrowser-linux-ia32

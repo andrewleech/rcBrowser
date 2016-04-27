@@ -2,4 +2,4 @@ language: node_js
 node_js:
   - "node"
 
-script: "cd src/electron; npm run-script package"
+script: "cd src/electron; npm install && npm run-script package"

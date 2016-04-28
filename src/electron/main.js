@@ -41,7 +41,12 @@ function startWebsocketServer() {
     ws.on('message', function incoming(message, flags) {
       console.log('received: %s', message);
       var jmsg = JSON.parse(message);
-      var ret = handleMessage(jmsg);
+      var ret;
+      try {
+        ret = handleMessage(jmsg);
+      } catch (e) {
+        console.log(e);
+      }
       ws.send(JSON.stringify(ret));
     });
 
@@ -93,13 +98,13 @@ function createWindow () {
 app.on('ready', createWindow);
 
 // Quit when all windows are closed.
-app.on('window-all-closed', function () {
-  // On OS X it is common for applications and their menu bar
-  // to stay active until the user quits explicitly with Cmd + Q
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
+//app.on('window-all-closed', function () {
+//  // On OS X it is common for applications and their menu bar
+//  // to stay active until the user quits explicitly with Cmd + Q
+//  if (process.platform !== 'darwin') {
+//    app.quit();
+//  }
+//});
 
 app.on('activate', function () {
   // On OS X it's common to re-create a window in the app when the
@@ -110,10 +115,17 @@ app.on('activate', function () {
 });
 
 function close() {
-    var msg = {fn: 'backToBlack'};
-    win.webContents.send('webview', JSON.stringify(msg));
+  var msg = {fn: 'backToBlack'};
+  win.webContents.send('webview', JSON.stringify(msg));
+  if (win.isFullScreen()) {
+    win.on('leave-full-screen', function () {
+      win.hide();
+    });
+    win.setFullScreen(false);
+  } else {
     win.hide();
-    sendMessage('close');  // Ensure kodi is notified of the closure.
+  }
+  sendMessage('close');  // Notify the controller of the closure.
 }
 
 function keyPress(keycode) {
@@ -149,6 +161,15 @@ function handleMessage(message) {
       break;
 
     case 'show':
+      win.setFullScreen(false);
+      win.restore();
+      win.show();
+      ret.arg = true;
+      break;
+
+    case 'showFullscreen':
+      win.setFullScreen(true);
+      win.restore();
       win.show();
       ret.arg = true;
       break;
@@ -195,7 +216,7 @@ function handleMessage(message) {
       break;
 
     case 'setFullScreen':
-      var enable = (arg.toLowerCase() == 'true');
+      var enable = arg;
       win.setFullScreen(enable);
       ret.arg = enable;
       break;

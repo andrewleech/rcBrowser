@@ -52,7 +52,11 @@ ipcMain.on('keyDown', function(event, arg) {
   if (keymap) {
     console.log('mapping_key: '+arg);
     console.log('running_key: '+arg+" = "+keymap[arg]);
-    eval(keymap[arg]);
+    try {
+      eval(keymap[arg]);
+    } catch (e) {
+       console.log(e);
+    }
   } else {
     console.log('no_map_key: '+arg)
     sendMessage('keyDown', arg);
@@ -182,7 +186,12 @@ function handleMessage(message) {
       break;
 
     case 'executeJavaScript':
-      ret.arg = eval(arg);
+      console.log(arg);
+      try {
+        ret.arg = eval(arg);
+      } catch (e) {
+         console.log(e);
+      }
       break;
 
     case 'setFullScreen':

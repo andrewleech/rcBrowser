@@ -14,11 +14,11 @@
   // Capture keypresses - mostly works, but text still types into input boxes
   $(window).keydown(function(event) {
       if(event.ctrlKey) { 
-        console.log("Hey! Ctrl+" + event.keyCode + " event captured!");
+        console.log("Ctrl+" + event.keyCode + " event captured!");
         event.preventDefault(); 
       }
       else { 
-        console.log("Hey! " + event.keyCode + " event captured!");
+        console.log(event.keyCode + " event captured!");
         event.preventDefault(); 
       }
       ipc.send('keyDown', event.keyCode);
@@ -45,6 +45,9 @@
         
         case 'loadURL':
           webview.src = arg;
+          // webview.once('dom-ready', () => {
+          //   respond(ret);
+          // })
           break;
         
         case 'backToBlack':

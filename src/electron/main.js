@@ -1,25 +1,30 @@
 'use strict';
 
 const electron = require('electron');
-var http = require('http');
+const {app, Menu, Tray, BrowserWindow} = require('electron')
+
 var fs = require('fs');
+var http = require('http');
+const path = require('path');
 
 var flashLoader = require('flash-player-loader');
-var path = '/Volumes/SpindMac/Users/corona/Library/Application Support/Google/Chrome/PepperFlash/21.0.0.216/PepperFlashPlayer.plugin';
-flashLoader.addSource(path);
-console.log(flashLoader.getVersion(path));
-path = '/Volumes/SpindMac/Users/corona/Library/Application Support/Google/Chrome/PepperFlash/21.0.0.216';
-flashLoader.addSource(path);
+flashLoader.addSource('/Volumes/SpindMac/Users/corona/Library/Application Support/Google/Chrome/PepperFlash/21.0.0.216/PepperFlashPlayer.plugin');
+flashLoader.addSource('/Volumes/SpindMac/Users/corona/Library/Application Support/Google/Chrome/PepperFlash/21.0.0.216');
+flashLoader.addSource('/usr/lib/pepperflashplugin-nonfree');
 flashLoader.load();
 
-// Module to control application life.
-const app = electron.app;
-// Module to create native browser window.
-const BrowserWindow = electron.BrowserWindow;
+// "sudo apt-get install pepperflashplugin-nonfree"
+// "gpg --keyserver pgp.mit.edu --recv-keys 1397BC53640DB551"
+// "gpg --export --armor 1397BC53640DB551 | sudo sh -c 'cat >> /usr/lib/pepperflashplugin-nonfree/pubkey-google.txt'"
+// "sudo update-pepperflashplugin-nonfree --install"
+
+
+const iconPath = path.join(__dirname, 'logo.png');
+let appIcon = null;
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
-let win;
+let win = null;
 let websocket;
 
 var keymap;
@@ -41,13 +46,16 @@ function startWebsocketServer() {
     ws.on('message', function incoming(message, flags) {
       console.log('received: %s', message);
       var jmsg = JSON.parse(message);
-      var ret;
+      var respond = function(r) {
+        ws.send(JSON.stringify(r));
+      }
       try {
-        ret = handleMessage(jmsg);
+        handleMessage(jmsg, respond);
       } catch (e) {
         console.log(e);
+        respond(null);
       }
-      ws.send(JSON.stringify(ret));
+      
     });
 
   });
@@ -71,12 +79,17 @@ ipcMain.on('keyDown', function(event, arg) {
 
 function createWindow () {
   // Create the browser window.
-  win = new BrowserWindow({show: false, 'web-preferences': {'web-security': false, 'plugins': true}});
+  win = new BrowserWindow({
+    show: false, 
+    autoHideMenuBar: true,
+    webPreferences: {webSecurity: false, 'plugins': true}}
+  );
 
   // and load the index.html of the app.
   win.loadURL('file://' + __dirname + '/index.html');
 
-  win.webContents.on('did-finish-load', function() {
+  win.webContents.once('did-finish-load', function() {
+    
     win.webContents.send('console', 'ready');
     startWebsocketServer();
     // win.show();
@@ -85,17 +98,46 @@ function createWindow () {
 
   // Emitted when the window is closed.
   win.on('closed', function() {
-    // Dereference the window object, usually you would store windows
-    // in an array if your app supports multi windows, this is the time
-    // when you should delete the corresponding element.
-    win = null;
+    try {
+      event.preventDefault();
+      console.log('window closed manually');
+      close()
+    } catch (e) {    }
   });
 
 }
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.
-app.on('ready', createWindow);
+app.on('ready', function(){
+  createWindow();
+
+  appIcon = new Tray(iconPath);
+  var contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Toggle DevTools',
+      accelerator: 'Alt+Command+I',
+      click: function() {
+        win.show();
+        win.toggleDevTools();
+      }
+    },
+    { label: 'Show',
+      click: function() {
+        win.setFullScreen(true);
+        win.show();
+        console.log('manual show');
+        console.log(win);
+      }
+    },
+    { label: 'Quit',
+      accelerator: 'Command+Q',
+      selector: 'terminate:',
+    }
+  ]);
+  appIcon.setToolTip('rcBrowser');
+  appIcon.setContextMenu(contextMenu);
+});
 
 // Quit when all windows are closed.
 //app.on('window-all-closed', function () {
@@ -106,19 +148,19 @@ app.on('ready', createWindow);
 //  }
 //});
 
-app.on('activate', function () {
-  // On OS X it's common to re-create a window in the app when the
-  // dock icon is clicked and there are no other windows open.
-  if (win === null) {
-    createWindow();
-  }
-});
+// app.on('activate', function () {
+//   // On OS X it's common to re-create a window in the app when the
+//   // dock icon is clicked and there are no other windows open.
+//   if (win === null) {
+//     createWindow();
+//   }
+// });
 
 function close() {
   var msg = {fn: 'backToBlack'};
   win.webContents.send('webview', JSON.stringify(msg));
   if (win.isFullScreen()) {
-    win.on('leave-full-screen', function () {
+    win.once('leave-full-screen', function () {
       win.hide();
     });
     win.setFullScreen(false);
@@ -140,18 +182,19 @@ function webviewJavascript(js) {
   return ret;
 }
 
-function handleMessage(message) {
+function handleMessage(message, respond) {
   var fn_name = message.fn;
   var arg = message.arg;
   var seq = message.seq;
   var ret = {seq:seq, arg:null};
+  var responded = false;
 
   switch(fn_name) {
 
     case 'loadURL':
       var msg = {fn: 'loadURL', arg: arg}
       win.webContents.send('webview', JSON.stringify(msg));
-      ret.arg = true;
+      ret.arg = true;      
       break;
 
     case 'keyPress':
@@ -167,8 +210,9 @@ function handleMessage(message) {
       ret.arg = true;
       break;
 
-    case 'showFullscreen':
+    case 'showFullScreen':
       win.setFullScreen(true);
+      console.log('triggered show');
       win.restore();
       win.show();
       ret.arg = true;
@@ -215,6 +259,15 @@ function handleMessage(message) {
       }
       break;
 
+    case 'webContentsJavaScript':
+      console.log(arg);
+      try {
+        ret.arg = win.webContents.executeJavaScript(arg);
+      } catch (e) {
+         console.log(e);
+      }
+      break;
+
     case 'setFullScreen':
       var enable = arg;
       win.setFullScreen(enable);
@@ -234,7 +287,9 @@ function handleMessage(message) {
       ret.arg = false;
 
   };
-  return ret
+  if (!responded) {
+    respond(ret);
+  }
 };
 
 function sendMessage(fn, arg) {
@@ -448,6 +503,7 @@ function sendMessage(fn, arg) {
 
 // var menu = Menu.buildFromTemplate(template);
 // Menu.setApplicationMenu(menu);
+
 
 
 

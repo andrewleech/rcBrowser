@@ -8,9 +8,25 @@ var http = require('http');
 const path = require('path');
 
 var flashLoader = require('flash-player-loader');
-flashLoader.addSource('/Volumes/SpindMac/Users/corona/Library/Application Support/Google/Chrome/PepperFlash/21.0.0.216/PepperFlashPlayer.plugin');
-flashLoader.addSource('/Volumes/SpindMac/Users/corona/Library/Application Support/Google/Chrome/PepperFlash/21.0.0.216');
-flashLoader.addSource('/usr/lib/pepperflashplugin-nonfree');
+
+if (process.platform == 'darwin') {
+  var homedir = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE
+  
+  var pepperflash = homedir + '/Library/Application Support/Google/Chrome/PepperFlash'
+  var pepperflash_versions = fs.readdirSync(pepperflash)
+  pepperflash_versions = pepperflash_versions.filter(function(value){
+    return (!value.startsWith('.'));
+  })
+  var pepperflash_dir = pepperflash + '/' + pepperflash_versions[pepperflash_versions.length - 1];
+  // console.log(pepperflash_dir)
+  flashLoader.addSource(pepperflash_dir);
+  flashLoader.addSource(pepperflash_dir + '/PepperFlashPlayer.plugin');
+
+} else if (process.platform == 'win32') {
+  // ???
+} else if (process.platform == 'linux') {
+  flashLoader.addSource('/usr/lib/pepperflashplugin-nonfree');
+}
 flashLoader.load();
 
 // "sudo apt-get install pepperflashplugin-nonfree"

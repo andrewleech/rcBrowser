@@ -8,31 +8,73 @@ var http = require('http');
 const path = require('path');
 
 var flashLoader = require('flash-player-loader');
-
+  
 if (process.platform == 'darwin') {
   var homedir = process.env.HOME || process.env.HOMEPATH || process.env.USERPROFILE
   
-  var pepperflash = homedir + '/Library/Application Support/Google/Chrome/PepperFlash'
-  var pepperflash_versions = fs.readdirSync(pepperflash)
-  pepperflash_versions = pepperflash_versions.filter(function(value){
+  // Look for Chrome PepperFlash
+  var crome = '/Applications//Google Chrome.app/Contents/Versions/';
+  var chrome_versions = fs.readdirSync(crome);
+  chrome_versions = chrome_versions.filter(function(value){
     return (!value.startsWith('.'));
   })
-  var pepperflash_dir = pepperflash + '/' + pepperflash_versions[pepperflash_versions.length - 1];
-  // console.log(pepperflash_dir)
-  flashLoader.addSource(pepperflash_dir);
-  flashLoader.addSource(pepperflash_dir + '/PepperFlashPlayer.plugin');
+  var chrome_version = chrome_versions[chrome_versions.length - 1];
+  var pepperflash = crome + chrome_version + '/Google Chrome Framework.framework/Internet Plug-Ins/PepperFlash/PepperFlashPlayer.plugin';
+  try {
+    fs.statSync(pepperflash); // Throws if folder does not exist
+    flashLoader.addSource(pepperflash);
+
+  } catch (e) {
+    pepperflash = undefined;
+  }
+
+  if (pepperflash === undefined) {
+    // Look for Adobe Flash Player
+    var pepperflash = '/Library/Internet Plug-Ins/PepperFlashPlayer/PepperFlashPlayer.plugin'
+    try {
+      fs.statSync(pepperflash); // Throws if folder does not exist
+      flashLoader.addSource(pepperflash);
+
+    } catch (e) {
+      pepperflash = undefined;
+    }
+  }
+  if (pepperflash === undefined) {
+    // Look for Adobe Flash Player
+    var pepperflash = '/Library/Internet Plug-Ins/PepperFlashPlayer/PepperFlashPlayer.plugin'
+    try {
+      fs.statSync(pepperflash); // Throws if folder does not exist
+      flashLoader.addSource(pepperflash);
+
+    } catch (e) {
+      pepperflash = undefined;
+    }
+
+  }
+
+  if (pepperflash === undefined)
+  {
+    console.log("No Flash Player detected, if you need one install Adobe Flash PLayer (https://get.adobe.com/flashplayer) or Google Chrome")
+  }
 
 } else if (process.platform == 'win32') {
   // ???
 } else if (process.platform == 'linux') {
-  flashLoader.addSource('/usr/lib/pepperflashplugin-nonfree');
+    var pepperflash = '/usr/lib/pepperflashplugin-nonfree';
+    try {
+      fs.statSync(pepperflash); // Throws if folder does not exist
+      flashLoader.addSource(pepperflash);
+
+    } catch (e) {
+      var msg = "No Flash Player detected, if you need one install Adobe Flash PLayer. On debian/ubuntu:\n"
+      msg += "sudo apt-get install pepperflashplugin-nonfree\n"
+      msg += "gpg --keyserver pgp.mit.edu --recv-keys 1397BC53640DB551\n"
+      msg += "gpg --export --armor 1397BC53640DB551 | sudo sh -c 'cat >> /usr/lib/pepperflashplugin-nonfree/pubkey-google.txt'\n"
+      msg += "sudo update-pepperflashplugin-nonfree --install"
+      console.log(msg)
+    }
 }
 flashLoader.load();
-
-// "sudo apt-get install pepperflashplugin-nonfree"
-// "gpg --keyserver pgp.mit.edu --recv-keys 1397BC53640DB551"
-// "gpg --export --armor 1397BC53640DB551 | sudo sh -c 'cat >> /usr/lib/pepperflashplugin-nonfree/pubkey-google.txt'"
-// "sudo update-pepperflashplugin-nonfree --install"
 
 
 const iconPath = path.join(__dirname, 'logo.png');
@@ -109,7 +151,7 @@ function createWindow () {
     win.webContents.send('console', 'ready');
     startWebsocketServer();
     // win.show();
-    console.log('rcBrowser Ready');
+    console.log('rcBrowser ready');
   });
 
   // Emitted when the window is closed.
